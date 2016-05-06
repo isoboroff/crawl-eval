@@ -186,6 +186,8 @@ public class MinHash {
             }
             ObjectMapper mapper = new ObjectMapper();
             String line;
+            String url = null;
+            String key = null;
             try {
                 while ((line = in.readLine()) != null) {
                     Map obj = mapper.readValue(line, new TypeReference<Map<?, ?>>() {});
@@ -199,14 +201,14 @@ public class MinHash {
                         System.err.println("Skipping document with no raw content");
                         continue;
                     }
-                    String url = get_string(obj, "url");
+                    url = get_string(obj, "url");
                     if (url == null) {
                         System.err.println("Skipping document with no url");
                         continue;
                     }
 
                     int[] signatures = docToMinHashes(raw);
-                    String key = get_string(obj, "team") + ":" + url;
+                    key = get_string(obj, "team") + ":" + url;
                     lsh.insert(key, signatures);
 
                     count++;
@@ -216,6 +218,8 @@ public class MinHash {
                 }
             } catch (EOFException eof) {
                 // continue
+            } catch (IllegalArgumentException parse_err) {
+                System.err.println("Error parsing " + key + " // " + url);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -235,13 +239,15 @@ public class MinHash {
             }
             ObjectMapper mapper = new ObjectMapper();
             String line;
+            String team = null;
+            String url = null;
             try {
                 while ((line = in.readLine()) != null) {
                     Map obj = mapper.readValue(line, new TypeReference<Map<?, ?>>() {});
                     String raw = get_string(obj, "raw_content");
                     String type = get_string(obj, "content_type");
-                    String url = get_string(obj, "url");
-                    String team = get_string(obj, "team");
+                    url = get_string(obj, "url");
+                    team = get_string(obj, "team");
                     String teamurl = team + ":" + url;
                     if (url2sha.containsKey(teamurl)) {
                         System.out.println(url2sha.get(teamurl) + " " + team + " " + url);
@@ -283,6 +289,8 @@ public class MinHash {
                 }
             } catch (EOFException eof) {
                 // continue
+            } catch (IllegalArgumentException parse_err) {
+                System.err.println("Error parsing " + team + " // " + url);
             } catch (Exception e) {
                 e.printStackTrace();
             }
