@@ -1,10 +1,14 @@
 #!/usr/bin/env Rscript
-library(Rcapture)
-args <- commandArgs()
 
-captures <- read.table(args[2], header=TRUE)
-summary(captures)
+library(Rcapture)
+args <- commandArgs(TRUE)
+
+captures <- read.table(args[1], header=TRUE)
+print(summary(captures))
 caps <- captures[2:5]
-closedp.t(caps)
-colSums(caps) / closedpCI.t(caps, m="Mth")$n
-colSums(caps) / closedpCI.t(caps, m="Mth")$results[1]
+print(closedp.t(caps))
+ci <- closedpCI.t(caps, m="Mth")
+print(ci)
+print(colSums(caps) / ci$n)
+print(colSums(caps) / ci$results[1])
+
