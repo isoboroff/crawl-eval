@@ -26,13 +26,14 @@ public class MinHash {
     @Option(name="-h", usage="Print out help")
     boolean show_help = false;
 
-    @Option(name="-n", usage="Number of bands per hashtable row (default 16; must divide 256)")
-    int num_bands = 16;
+    @Option(name="-n", usage="Number of hash entries (default 256)")
+    int num_hashes = 256;
+
+    @Option(name="-t", usage="Jaccard similarity threshold (default 0.9)")
+    double jaccard_threshold = 0.9;
 
     @Argument
     List<String> files = new ArrayList<String>();
-
-    public final int num_hashes = 256;
 
     public static void main(String[] args) throws IOException {
         MinHash minhash = new MinHash();
@@ -89,7 +90,7 @@ public class MinHash {
 
         System.err.println("Pass 1: Indexing using LSH");
         int count = 0;
-        LSH lsh = new LSH(num_hashes, num_bands);
+        LSH lsh = new LSH(num_hashes, jaccard_threshold);
 
         for (String filename : files) {
             BufferedReader in = null;
