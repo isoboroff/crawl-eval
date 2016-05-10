@@ -21,6 +21,6 @@ for line in sys.stdin:
         
     lineno += 1
     if 'url' in o and o['url'] == args.url:
-        print(o['raw_content'])
+        print(json.dumps(o))
         break
         
