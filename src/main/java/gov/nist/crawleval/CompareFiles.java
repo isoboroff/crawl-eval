@@ -25,26 +25,18 @@ public class CompareFiles {
     @Option(name="-h", usage="Print out help")
     public boolean show_help = false;
 
-    @Option(name="-n", usage="Number of bands in hash table (default 16)")
-    public int num_bands = 16;
+    @Option(name="-n", usage="Number of hash entries (default 256)")
+    int num_hashes = 256;
+
+    @Option(name="-t", usage="Jaccard similarity threshold (default 0.9)")
+    double jaccard_threshold = 0.9;
 
     @Argument
     public List<String> files = new ArrayList<String>();
 
-
-    public final int num_hashes = 256;
-
     public static void main(String[] args) throws IOException {
         CompareFiles minhash = new CompareFiles();
         minhash.do_it(args);
-    }
-
-    public String get_string(Map map, String key) {
-        Object val = map.get(key);
-        if (val instanceof String && val != null)
-            return (String)val;
-        else
-            return null;
     }
 
     protected Analyzer analyzer = new ShingleAnalyzerWrapper(new SimpleAnalyzer(), 9);
@@ -89,7 +81,7 @@ public class CompareFiles {
 
         System.err.println("Pass 1: Indexing using LSH");
         int count = 0;
-        LSH lsh = new LSH(num_hashes, num_bands);
+        LSH lsh = new LSH(num_hashes, jaccard_threshold);
 
         for (String filename : files) {
             try {
