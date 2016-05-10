@@ -65,6 +65,10 @@ public class MinHash {
         Object val = map.get(key);
         if (val instanceof String && val != null)
             return (String)val;
+        else if (val instanceof List && val != null) {
+            List<Object> vallist = (List)val;
+            return (String)vallist.get(0);
+        }
         else
             return null;
     }
@@ -174,7 +178,7 @@ public class MinHash {
                         continue;
                     }
                     if (type == null || !(type.contains("text") || type.contains("html"))) {
-                        System.err.println("Hashing canonicalized URL for non-text document");
+                        System.err.println("Hashing canonicalized URL for non-text document " + type);
                         URL canurl = new URL(url);
                         String sha = sha256.hashString(canurl.getNutchNormalizedUrl(), Charsets.UTF_8).toString();
                         url2sha.put(teamurl, sha);
