@@ -4,8 +4,6 @@ import ch.sentric.URL;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import de.l3s.boilerpipe.extractors.KeepEverythingExtractor;
@@ -28,109 +26,17 @@ public class MinHash {
     @Option(name="-h", usage="Print out help")
     boolean show_help = false;
 
-    @Option(name="-n", usage="Number of signatures per document")
-    int num_hashes = 256;
+    @Option(name="-n", usage="Number of bands per hashtable row (default 16; must divide 256)")
+    int num_bands = 16;
 
     @Argument
     List<String> files = new ArrayList<String>();
 
+    public final int num_hashes = 256;
+
     public static void main(String[] args) throws IOException {
         MinHash minhash = new MinHash();
         minhash.do_it(args);
-    }
-
-    protected class MinHasher {
-        public final int next_prime = 2147483587; // http://www.prime-numbers.org/prime-number-2147480000-2147485000.htm
-        public final int max_value = next_prime - 1;
-        public int[] coeffA;
-        public int[] coeffB;
-        public int num_hashes;
-
-        public MinHasher(int n) {
-            num_hashes = n;
-            coeffA = pickRandCoeffs(num_hashes);
-            coeffB = pickRandCoeffs(num_hashes);
-        }
-
-        public int[] hash(Set<Integer> doc) {
-            int[] sigs = new int[num_hashes];
-            for (int i = 0; i < num_hashes; i++) {
-                int min = next_prime + 1;
-                for (int shingle : doc) {
-                    shingle = shingle % max_value;
-                    int h = (coeffA[i] * shingle + coeffB[i]) % next_prime;
-                    if (h < min)
-                        min = h;
-                }
-                sigs[i] = min;
-            }
-            return sigs;
-        }
-
-        public int[] pickRandCoeffs(int k) {
-            int[] rands = new int[k];
-            HashSet<Integer> seen = new HashSet<Integer>(k);
-            Random rng = new Random();
-            int i = 0;
-            while (k > 0) {
-                int randIndex = rng.nextInt(max_value);
-                while (seen.contains(randIndex))
-                    randIndex = rng.nextInt(max_value);
-                rands[i] = randIndex;
-                seen.add(randIndex);
-                k = k - 1;
-                i++;
-            }
-            return rands;
-        }
-    }
-
-    protected class LSH {
-        Multimap<String, String>[] maps;
-        int num_bands;
-        int num_rows;
-        int num_hashes;
-
-        public LSH(int n, int b, int r) {
-            num_bands = b;
-            num_rows = r;
-            num_hashes = n;
-            maps = new ArrayListMultimap[num_bands];
-            for (int i = 0; i < num_bands; i++)
-                maps[i] = ArrayListMultimap.create();
-        }
-
-        public void insert(String key, int[] hashes) {
-            for (int b = 0; b < num_bands; b++) {
-                StringBuffer sb = new StringBuffer();
-                for (int r = 0; r < num_rows; r++) {
-                    sb.append(Integer.toHexString(hashes[b * num_rows + r]));
-                }
-                String hh = sb.toString();
-                maps[b].put(hh, key);
-            }
-        }
-
-        public Set<String> query(int[] hashes) {
-            HashSet<String> candidates = new HashSet<String>();
-            for (int b = 0; b < num_bands; b++) {
-                StringBuffer sb = new StringBuffer();
-                for (int r = 0; r < num_rows; r++) {
-                    sb.append(String.format("%8x", hashes[b * num_rows + r]));
-                }
-                String hh = sb.toString();
-                candidates.addAll(maps[b].get(hh));
-            }
-            return candidates;
-        }
-    }
-
-    public String get_string(Map map, String key) {
-        Object val = map.get(key);
-        if (val instanceof String && val != null)
-            return (String)val;
-        else
-            return null;
     }
 
     protected Analyzer analyzer = new ShingleAnalyzerWrapper(new SimpleAnalyzer(), 9);
@@ -154,6 +60,14 @@ public class MinHash {
 
     }
 
+    public String get_string(Map map, String key) {
+        Object val = map.get(key);
+        if (val instanceof String && val != null)
+            return (String)val;
+        else
+            return null;
+    }
+
     public void do_it(String[] args) throws IOException {
         CmdLineParser argparser = new CmdLineParser(this);
         try {
@@ -175,7 +89,7 @@ public class MinHash {
 
         System.err.println("Pass 1: Indexing using LSH");
         int count = 0;
-        LSH lsh = new LSH(num_hashes, 16, 16);
+        LSH lsh = new LSH(num_hashes, num_bands);
 
         for (String filename : files) {
             BufferedReader in = null;
