@@ -1,4 +1,4 @@
-
+[![Build Status](https://travis-ci.com/isoboroff/crawl-eval.svg?branch=master)](https://travis-ci.com/isoboroff/crawl-eval)
 # crawl-eval
 
 This is a bag of tools I created in organizing an evaluation of crawling. The evaluation needed to extract text from HTML, identify near-duplicates with a fingerprinting scheme, and count how many evaluation participants found each page. This data was used in a capture-recapture analysis using R's Rcapture package, that I won't go into here.
